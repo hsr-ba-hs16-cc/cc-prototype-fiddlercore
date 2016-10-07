@@ -1,0 +1,9 @@
+c:\users\fabian\documents\visual studio 2015\Projects\RedirectProxy\RedirectProxy\bin\Debug\RedirectProxy.exe.config
+c:\users\fabian\documents\visual studio 2015\Projects\RedirectProxy\RedirectProxy\bin\Debug\RedirectProxy.exe
+c:\users\fabian\documents\visual studio 2015\Projects\RedirectProxy\RedirectProxy\bin\Debug\RedirectProxy.pdb
+c:\users\fabian\documents\visual studio 2015\Projects\RedirectProxy\RedirectProxy\bin\Debug\FiddlerCore.dll
+c:\users\fabian\documents\visual studio 2015\Projects\RedirectProxy\RedirectProxy\obj\Debug\RedirectProxy.csprojResolveAssemblyReference.cache
+c:\users\fabian\documents\visual studio 2015\Projects\RedirectProxy\RedirectProxy\obj\Debug\RedirectProxy.exe
+c:\users\fabian\documents\visual studio 2015\Projects\RedirectProxy\RedirectProxy\obj\Debug\RedirectProxy.pdb
+C:\Users\fabian\Documents\Visual Studio 2015\Projects\RedirectProxy\RedirectProxy\bin\Debug\BCMakeCert.dll
+C:\Users\fabian\Documents\Visual Studio 2015\Projects\RedirectProxy\RedirectProxy\bin\Debug\CertMaker.dll
