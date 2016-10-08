@@ -23,8 +23,9 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using Fiddler;
+using System.Net;
 
-namespace Demo
+namespace RediretProxy
 {
     class Program
     {
@@ -53,56 +54,6 @@ namespace Demo
             return s.Substring(0, iLen - 3) + "...";
         }
 
-#if SAZ_SUPPORT
-        private static void ReadSessions(List<Fiddler.Session> oAllSessions)
-        {
-            Session[] oLoaded = Utilities.ReadSessionArchive(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) 
-                                                           + Path.DirectorySeparatorChar + "ToLoad.saz", false);
-
-            if ((oLoaded != null) && (oLoaded.Length > 0))
-            {
-                oAllSessions.AddRange(oLoaded);
-                WriteCommandResponse("Loaded: " + oLoaded.Length + " sessions.");
-            }
-        }
-
-        private static void SaveSessionsToDesktop(List<Fiddler.Session> oAllSessions)
-        {
-            bool bSuccess = false;
-            string sFilename = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory)
-                             + Path.DirectorySeparatorChar + DateTime.Now.ToString("hh-mm-ss") + ".saz";
-            try
-            {
-                try
-                {
-                    Monitor.Enter(oAllSessions);
-
-                    string sPassword = null;
-                    Console.WriteLine("Password Protect this Archive (Y/N)?");
-                    ConsoleKeyInfo oCKI = Console.ReadKey();
-                    if ((oCKI.KeyChar == 'y') || (oCKI.KeyChar == 'Y'))
-                    {
-                        Console.WriteLine("\nEnter the password:");
-                        sPassword = Console.ReadLine();
-                        Console.WriteLine(String.Format("\nEncrypting with Password: '{0}'", sPassword));
-                    }
-                    Console.WriteLine();
-
-                    bSuccess = Utilities.WriteSessionArchive(sFilename, oAllSessions.ToArray(), sPassword, false);
-                }
-                finally
-                {
-                    Monitor.Exit(oAllSessions);
-                }
-
-                WriteCommandResponse( bSuccess ? ("Wrote: " + sFilename) : ("Failed to save: " + sFilename) );
-            }
-            catch (Exception eX)
-            {
-                Console.WriteLine("Save failed: " + eX.Message);
-            }
-        }
-#endif
 
         private static void WriteSessionList(List<Fiddler.Session> oAllSessions)
         {
@@ -127,8 +78,12 @@ namespace Demo
 
         static void Main(string[] args)
         {
+            // Trust All Certificates, very insecure but for testing :)
+            ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
+            SimpleFakeCC httpServer = new SimpleFakeCC(9090);
+            
             List<Fiddler.Session> oAllSessions = new List<Fiddler.Session>();
-
+            Client client = new Client();
             // <-- Personalize for your Application, 64 chars or fewer
             Fiddler.FiddlerApplication.SetAppDisplayName("FiddlerCoreDemoApp");
 
@@ -195,66 +150,51 @@ namespace Demo
                     oS.utilSetResponseBody("<html><body>Request for httpS://" + sSecureEndpointHostname + ":" + iSecureEndpointPort.ToString() + " received. Your request was:<br /><plaintext>" + oS.oRequest.headers.ToString());
                 }
 
+                /*        
+
+                  // Das sind di beste drü variante
+
+                  //Sött de request uf en andere host leite. passiert gar nüt
+                  if (oS.HostnameIs(""))
+                  {
+                      oS.oRequest["Fiddler-Host"] = "...";
+                  }
 
 
+                  //Funktioniert so halbe. kriege eifach kein response. wo de response isch/verschwindet, kein plan
+                  if(oS.HostnameIs("silvanadrian.ch"))
+                  {
+                      Console.WriteLine("Hostname gefunden");
+                      oS.bypassGateway = true;
+                      oS.oRequest["x-overrideHost"] = "silvn.com";
+                  }
 
 
+                  /*
+                  //Funktioniert nöd
+                  if(oS.HostnameIs("..."))
+                  {
 
+                      oS.oRequest["X-OverrideGateway"] = "...";
+                  }
 
+                  //De oS.HostnameIs isch glaub au nöd so schlau müsst ja eigentlich d ip ha
 
+                  //diversi bastel sind au nöd gange, mit host ändere und biom fake wieder isetze
 
+                  */
 
-                /*
-
-                // Das sind di beste drü variante
-
-                //Sött de request uf en andere host leite. passiert gar nüt
-                if (oS.HostnameIs("..."))
+                // Redirect traffic only HTTP for now
+                Console.WriteLine(oS.oRequest.headers);
+                if (oS.HTTPMethodIs("CONNECT") && oS.oRequest.headers.Exists("Virus"))
                 {
-                    oS.oRequest["Fiddler-Host"] = "...";
+                    Console.WriteLine("this works");
+                    oS.PathAndQuery = "127.0.0.1:9090";
                 }
 
-                //Funktioniert so halbe. kriege eifach kein response. wo de response isch/verschwindet, kein plan
-                if(oS.HostnameIs("..."))
-                {
-                    oS.bypassGateway = true;
-                    oS.oRequest["x-overrideHost"] = "...";
-                }
+                if (oS.oRequest.headers.Exists("Virus")) oS.host = "127.0.0.1:9090";
 
 
-                //Funktioniert nöd
-                if(oS.HostnameIs("..."))
-                {
-                    
-                    oS.oRequest["X-OverrideGateway"] = "...";
-                }
-
-                //De oS.HostnameIs isch glaub au nöd so schlau müsst ja eigentlich d ip ha
-
-                //diversi bastel sind au nöd gange, mit host ändere und biom fake wieder isetze
-
-
-
-
-                */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                
-
-               
 
             };
 
@@ -266,9 +206,9 @@ namespace Demo
                 Fiddler.FiddlerApplication.OnReadResponseBuffer += new EventHandler<RawReadEventArgs>(FiddlerApplication_OnReadResponseBuffer);
             */
 
-            /*
+            
             Fiddler.FiddlerApplication.BeforeResponse += delegate(Fiddler.Session oS) {
-                // Console.WriteLine("{0}:HTTP {1} for {2}", oS.id, oS.responseCode, oS.fullUrl);
+                Console.WriteLine("{0}:HTTP {1} for {2}", oS.id, oS.responseCode, oS.fullUrl);
                 
                 // Uncomment the following two statements to decompress/unchunk the
                 // HTTP response and subsequently modify any HTTP responses to replace 
@@ -276,7 +216,7 @@ namespace Demo
                 // set bBufferResponse = true inside the beforeREQUEST method above.
                 //
                 //oS.utilDecodeResponse(); oS.utilReplaceInResponse("Microsoft", "Bayden");
-            };*/
+            };
 
             Fiddler.FiddlerApplication.AfterSessionComplete += delegate (Fiddler.Session oS)
             {
@@ -294,27 +234,6 @@ namespace Demo
             #endregion AttachEventListeners
 
             string sSAZInfo = "NoSAZ";
-#if SAZ_SUPPORT
-            sSAZInfo = Assembly.GetAssembly(typeof(Ionic.Zip.ZipFile)).FullName;
-
-            // You can load Transcoders from any different assembly if you'd like, using the ImportTranscoders(string AssemblyPath) 
-            // overload.
-            //
-            //if (!FiddlerApplication.oTranscoders.ImportTranscoders(Assembly.GetExecutingAssembly()))
-            //{
-            //    Console.WriteLine("This assembly was not compiled with a SAZ-exporter");
-            //}
-
-            DNZSAZProvider.fnObtainPwd = () =>
-            {
-                Console.WriteLine("Enter the password (or just hit Enter to cancel):");
-                string sResult = Console.ReadLine();
-                Console.WriteLine();
-                return sResult;
-            };
-
-            FiddlerApplication.oSAZProvider = new DNZSAZProvider();
-#endif
 
             Console.WriteLine(String.Format("Starting {0} ({1})...", Fiddler.FiddlerApplication.GetVersionString(), sSAZInfo));
 
