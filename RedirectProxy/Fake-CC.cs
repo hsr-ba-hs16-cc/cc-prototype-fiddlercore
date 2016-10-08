@@ -15,22 +15,16 @@
     {
         private Thread _serverThread;
         private HttpListener _listener;
-        private int _port;
-
-        public int Port
-        {
-            get { return _port; }
-            private set { }
-        }
+        private int _port, _sslPort;
 
         /// <summary>
         /// Construct server with given port.
         /// </summary>
         /// <param name="path">Directory path to serve.</param>
         /// <param name="port">Port of the server.</param>
-        public SimpleFakeCC(int port)
+        public SimpleFakeCC(int port, int sslPort)
         {
-            this.Initialize(port);
+            this.Initialize(port, sslPort);
         }
 
         /// <summary>
@@ -46,6 +40,7 @@
         {
             _listener = new HttpListener();
             _listener.Prefixes.Add("http://*:" + _port.ToString() + "/");
+            _listener.Prefixes.Add("https://*:" + _sslPort.ToString() + "/");
             _listener.Start();
             while (true)
             {
@@ -63,16 +58,17 @@
 
         private void Process(HttpListenerContext context)
         {
-            Console.WriteLine("Process");
             //Adding permanent http response headers
             context.Response.AddHeader("Date", DateTime.Now.ToString("r"));
+            context.Response.AddHeader("Connection", "close");
             context.Response.StatusCode = (int)HttpStatusCode.OK;
             context.Response.Close();
         }
 
-        private void Initialize(int port)
+        private void Initialize(int port, int sslPort)
         {
             this._port = port;
+            this._sslPort = sslPort;
             _serverThread = new Thread(this.Listen);
             _serverThread.Start();
         }

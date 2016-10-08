@@ -41,9 +41,12 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>lib\CertMaker.dll</HintPath>
     </Reference>
-    <Reference Include="FiddlerCore, Version=2.6.2.0, Culture=neutral, PublicKeyToken=67cb91587178ac5a, processorArchitecture=MSIL">
+    <Reference Include="FiddlerCore4, Version=4.6.2.0, Culture=neutral, PublicKeyToken=67cb91587178ac5a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>lib\FiddlerCore.dll</HintPath>
+      <HintPath>..\..\..\..\Desktop\FiddlerCoreAPI\DotNet4\FiddlerCore4.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.QualityTools.Testing.Fakes, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -67,6 +70,10 @@
     <Content Include="lib\BCMakeCert.dll" />
     <Content Include="lib\CertMaker.dll" />
     <Content Include="lib\FiddlerCore.dll" />
+    <Content Include="lib\FiddlerCore4.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

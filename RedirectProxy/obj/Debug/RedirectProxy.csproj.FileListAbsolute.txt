@@ -16,3 +16,6 @@ C:\Users\silvan\Documents\BA\cc-prototype-fiddlercore\RedirectProxy\bin\Debug\Fi
 C:\Users\silvan\Documents\BA\cc-prototype-fiddlercore\RedirectProxy\obj\Debug\RedirectProxy.exe
 C:\Users\silvan\Documents\BA\cc-prototype-fiddlercore\RedirectProxy\obj\Debug\RedirectProxy.pdb
 C:\Users\silvan\Documents\BA\cc-prototype-fiddlercore\RedirectProxy\obj\Debug\RedirectProxy.csprojResolveAssemblyReference.cache
+C:\Users\silvan\Documents\BA\cc-prototype-fiddlercore\RedirectProxy\bin\Debug\Microsoft.QualityTools.Testing.Fakes.dll
+C:\Users\silvan\Documents\BA\cc-prototype-fiddlercore\RedirectProxy\bin\Debug\de\Microsoft.QualityTools.Testing.Fakes.resources.dll
+C:\Users\silvan\Documents\BA\cc-prototype-fiddlercore\RedirectProxy\bin\Debug\FiddlerCore4.dll

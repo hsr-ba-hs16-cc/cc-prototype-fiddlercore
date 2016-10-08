@@ -1,26 +1,5 @@
-﻿/*
-* This demo program shows how to use the FiddlerCore library.
-*
-* Before compiling, ensure that the project's REFERENCES list points to the 
-* copy of FiddlerCore.dll included in this package.
-*
-* SESSION ARCHIVE (SAZ) SUPPORT
-* ===========
-* By default, the project is compiled without support for the SAZ File format.
-* If you want to add SAZ support, define the token SAZ_SUPPORT in the list of
-* Conditional Compilation symbols on the project's BUILD tab. You will also
-* need to add Ionic.Zip.Reduced.dll to your project's references, add the included
- * SAZ-DotNetZip.cs file to your code, and set 
- * 
- *    FiddlerApplication.oSAZProvider = new DNZSAZProvider();
- *    
- * in your startup code, as shown below.
-*/
-
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using System.Threading;
 using Fiddler;
 using System.Net;
@@ -80,12 +59,13 @@ namespace RediretProxy
         {
             // Trust All Certificates, very insecure but for testing :)
             ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
-            SimpleFakeCC httpServer = new SimpleFakeCC(9090);
-            
-            List<Fiddler.Session> oAllSessions = new List<Fiddler.Session>();
+            SimpleFakeCC httpServer = new SimpleFakeCC(9080,9443);
             Client client = new Client();
+
+            List<Fiddler.Session> oAllSessions = new List<Fiddler.Session>();
+  
             // <-- Personalize for your Application, 64 chars or fewer
-            Fiddler.FiddlerApplication.SetAppDisplayName("FiddlerCoreDemoApp");
+            Fiddler.FiddlerApplication.SetAppDisplayName("Redirect Proxy");
 
             #region AttachEventListeners
             //
@@ -117,94 +97,59 @@ namespace RediretProxy
 
                 // Set this property if you want FiddlerCore to automatically authenticate by
                 // answering Digest/Negotiate/NTLM/Kerberos challenges itself
-                // oS["X-AutoAuth"] = "(default)";
+                //oS["X-AutoAuth"] = "(default)";
 
-                /* If the request is going to our secure endpoint, we'll echo back the response.
-                
-                Note: This BeforeRequest is getting called for both our main proxy tunnel AND our secure endpoint, 
-                so we have to look at which Fiddler port the client connected to (pipeClient.LocalPort) to determine whether this request 
-                was sent to secure endpoint, or was merely sent to the main proxy tunnel (e.g. a CONNECT) in order to *reach* the secure endpoint.
-
-                As a result of this, if you run the demo and visit https://localhost:7777 in your browser, you'll see
-
-                Session list contains...
-                 
-                    1 CONNECT http://localhost:7777
-                    200                                         <-- CONNECT tunnel sent to the main proxy tunnel, port 8877
-
-                    2 GET https://localhost:7777/
-                    200 text/html                               <-- GET request decrypted on the main proxy tunnel, port 8877
-
-                    3 GET https://localhost:7777/               
-                    200 text/html                               <-- GET request received by the secure endpoint, port 7777
-                */
                 //oS.bypassGateway = true;
-                
 
-                if ((oS.oRequest.pipeClient.LocalPort == iSecureEndpointPort) && (oS.hostname == sSecureEndpointHostname))
+
+                /*if ((oS.oRequest.pipeClient.LocalPort == iSecureEndpointPort) && (oS.hostname == sSecureEndpointHostname))
                 {    
                     oS.utilCreateResponseAndBypassServer();
                     oS.oResponse.headers.SetStatus(200, "Ok");
                     oS.oResponse["Content-Type"] = "text/html; charset=UTF-8";
                     oS.oResponse["Cache-Control"] = "private, max-age=0";
                     oS.utilSetResponseBody("<html><body>Request for httpS://" + sSecureEndpointHostname + ":" + iSecureEndpointPort.ToString() + " received. Your request was:<br /><plaintext>" + oS.oRequest.headers.ToString());
-                }
+                }*/
 
-                /*        
-
-                  // Das sind di beste drü variante
-
-                  //Sött de request uf en andere host leite. passiert gar nüt
-                  if (oS.HostnameIs(""))
-                  {
-                      oS.oRequest["Fiddler-Host"] = "...";
-                  }
+                /*
+                    Proxy Redirection
+                */
 
 
-                  //Funktioniert so halbe. kriege eifach kein response. wo de response isch/verschwindet, kein plan
-                  if(oS.HostnameIs("silvanadrian.ch"))
-                  {
-                      Console.WriteLine("Hostname gefunden");
-                      oS.bypassGateway = true;
-                      oS.oRequest["x-overrideHost"] = "silvn.com";
-                  }
-
-
-                  /*
-                  //Funktioniert nöd
-                  if(oS.HostnameIs("..."))
-                  {
-
-                      oS.oRequest["X-OverrideGateway"] = "...";
-                  }
-
-                  //De oS.HostnameIs isch glaub au nöd so schlau müsst ja eigentlich d ip ha
-
-                  //diversi bastel sind au nöd gange, mit host ändere und biom fake wieder isetze
-
-                  */
-
-                // Redirect traffic only HTTP for now
-                Console.WriteLine(oS.oRequest.headers);
-                if (oS.HTTPMethodIs("CONNECT") && oS.oRequest.headers.Exists("Virus"))
+                /*
+                // Redirect HTTP Traffic according to Header Virus
+                if (oS.HTTPMethodIs("CONNECT") && !oS.isHTTPS && oS.oRequest.headers.Exists("Trojan"))
                 {
-                    Console.WriteLine("this works");
-                    oS.PathAndQuery = "127.0.0.1:9090";
+                    oS.PathAndQuery = "127.0.0.1:9080";
+                }
+                if (oS.oRequest.headers.Exists("Trojan") && !oS.isHTTPS) oS.host = "127.0.0.1:9080";
+                */
+                //Redirect HTTPS Traffic
+
+                /*if (oS.HTTPMethodIs("CONNECT") && oS.oRequest.headers.Exists("TrojanSecure"))
+                {
+                    oS.PathAndQuery = "127.0.0.1:9443";
+                }
+                if (oS.RequestHeaders.Exists("TrojanSecure") && oS.isHTTPS) oS.host = "127.0.0.1:9443";
+               */
+
+                if (oS.HTTPMethodIs("CONNECT") &&  (oS.PathAndQuery == "wikipedia.org:443"))
+                {
+                    oS["OriginalHostname"] = oS.hostname;
+                    oS.PathAndQuery = "127.0.0.1:9080";
                 }
 
-                if (oS.oRequest.headers.Exists("Virus")) oS.host = "127.0.0.1:9090";
+                if (oS.PathAndQuery == "wikipedia.org:80") oS.host = "127.0.0.1:9080";
 
-
+                // If it's an HTTPS tunnel, override the certificate
+                if (oS.HTTPMethodIs("CONNECT") && (null != oS["OriginalHostname"]))
+                {
+                    oS["x-overrideCertCN"] = oS["OriginalHostname"];
+                    oS["X-IgnoreCertCNMismatch"] = "Server's hostname may not match what we're expecting...";
+                }
+                oS.bypassGateway = true;
 
             };
-
-            /*
-                // The following event allows you to examine every response buffer read by Fiddler. Note that this isn't useful for the vast majority of
-                // applications because the raw buffer is nearly useless; it's not decompressed, it includes both headers and body bytes, etc.
-                //
-                // This event is only useful for a handful of applications which need access to a raw, unprocessed byte-stream
-                Fiddler.FiddlerApplication.OnReadResponseBuffer += new EventHandler<RawReadEventArgs>(FiddlerApplication_OnReadResponseBuffer);
-            */
 
             
             Fiddler.FiddlerApplication.BeforeResponse += delegate(Fiddler.Session oS) {
@@ -217,6 +162,7 @@ namespace RediretProxy
                 //
                 //oS.utilDecodeResponse(); oS.utilReplaceInResponse("Microsoft", "Bayden");
             };
+
 
             Fiddler.FiddlerApplication.AfterSessionComplete += delegate (Fiddler.Session oS)
             {
@@ -237,18 +183,9 @@ namespace RediretProxy
 
             Console.WriteLine(String.Format("Starting {0} ({1})...", Fiddler.FiddlerApplication.GetVersionString(), sSAZInfo));
 
-            // For the purposes of this demo, we'll forbid connections to HTTPS 
-            // sites that use invalid certificates. Change this from the default only
-            // if you know EXACTLY what that implies.
-            Fiddler.CONFIG.IgnoreServerCertErrors = false;
+            // TODO Make Right Certs to Trust
+            Fiddler.CONFIG.IgnoreServerCertErrors = true;
 
-            // ... but you can allow a specific (even invalid) certificate by implementing and assigning a callback...
-            // FiddlerApplication.OnValidateServerCertificate += new System.EventHandler<ValidateServerCertificateEventArgs>(CheckCert);
-
-            FiddlerApplication.Prefs.SetBoolPref("fiddler.network.streaming.abortifclientaborts", true);
-
-            // For forward-compatibility with updated FiddlerCore libraries, it is strongly recommended that you 
-            // start with the DEFAULT options and manually disable specific unwanted options.
             FiddlerCoreStartupFlags oFCSF = FiddlerCoreStartupFlags.Default;
 
             // E.g. If you want to add a flag, start with the .Default and "OR" the new flag on:
