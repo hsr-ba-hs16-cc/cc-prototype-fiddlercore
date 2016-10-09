@@ -8,8 +8,6 @@ using System.Timers;
 
 class Client
 {
-
-    Task virus,virusSecure,virusHeaderless, randomTask, randomTaskSecure;
     System.Timers.Timer virusTimer, randomTimer;
     private static readonly Random random = new Random();
     private static readonly HashSet<String> urls = new HashSet<String>();
@@ -23,12 +21,12 @@ class Client
     public Client()
     {
         // Create a timer
-        virusTimer = new System.Timers.Timer(5000);
+        virusTimer = new System.Timers.Timer(8000);
         virusTimer.Elapsed += new ElapsedEventHandler(virusEvent);     
         virusTimer.Enabled = true;
-        //randomTimer = new System.Timers.Timer(5000);
-        //randomTimer.Elapsed += new ElapsedEventHandler(randomEvent);
-        //randomTimer.Enabled = true;
+        randomTimer = new System.Timers.Timer(9000);
+        randomTimer.Elapsed += new ElapsedEventHandler(randomEvent);
+        randomTimer.Enabled = true;
         //Add Urls to do Some Requests thanks to http://www.theuselessweb.com/ :)
         urls.Add("http://cant-not-tweet-this.com/");
         urls.Add("http://endless.horse/");
@@ -55,77 +53,30 @@ class Client
 
 
     private void virusEvent(object source, ElapsedEventArgs e) {
-        //virus = new Task(SendVirusRequestHeader);
-        //virus.Start();
-        virusSecure = new Task(SendVirusRequestHeaderSecure);
-        virusSecure.Start();
-        //virusHeaderless = new Task(SendVirusWithoutHeader);
-        //virusHeaderless.Start();
+        Task.Factory.StartNew(() => sendRequests(false, "Trojan", "Watch Out"));
+        Task.Factory.StartNew(() => sendRequests(true, "TrojanSecure", "Watch Out", "https://wikipedia.org"));
     }
 
     private void randomEvent(object source, ElapsedEventArgs e)
     {
-        randomTask = new Task(SendRandomRequest);
-        randomTask.Start();
-        randomTaskSecure = new Task(SendRandomRequestSecure);
-        randomTaskSecure.Start();
+        Task.Factory.StartNew(() => sendRequests());
+        Task.Factory.StartNew(() => sendRequests(true));
     }
 
-    async void sendRequests(Boolean secure = false,String Header = null, String HeaderContent = null)
+    async void sendRequests(Boolean secure = false,String Header = null, String HeaderContent = null,String page = null)
     {
         var client = new HttpClient(handler);
+        String tempPage = "";
         //Get Random URLS
-        if (secure) { String page = secureUrls.ElementAt(random.Next(urls.Count));}
-        else { String page = urls.ElementAt(random.Next(urls.Count));}
+        if(page == null)
+        {
+            if (secure) { tempPage = secureUrls.ElementAt(random.Next(urls.Count)); }
+            else { tempPage = urls.ElementAt(random.Next(urls.Count)); }
+        }
+        else { tempPage = page; }
         //Add Header
-        if(secure && Header != null){client.DefaultRequestHeaders.Add("Virus", "Watch Out");} 
+        if(Header != null){client.DefaultRequestHeaders.Add(Header, HeaderContent);}
+        var response = await client.GetAsync(tempPage);
     }
 
-    //Make a Request with a Virus HTTP Header
-    async void SendVirusRequestHeader()
-    {
-        // ... Target page.
-        String page = urls.ElementAt(random.Next(urls.Count));
-        //Add Client Handler to use Fiddler Local Proxy
-        // ... Use HttpClient.
-        var client = new HttpClient(handler);
-        client.DefaultRequestHeaders.Add("Trojan", "Watch Out");
-        var response = await client.GetAsync(page);
-    }
-
-    //Send a HTTPS Request with Virus Header
-    async void SendVirusRequestHeaderSecure()
-    {
-        // ... Target page.
-        String page = "https://wikipedia.org";
-
-        // ... Use HttpClient.
-        HttpClient client = new HttpClient(handler);
-        client.DefaultRequestHeaders.Add("TrojanSecure", "Watch Out");
-        HttpResponseMessage response = await client.GetAsync(page);
-    }
-
-    async void SendVirusWithoutHeader()
-    {
-        // ... Target page.
-        String page = secureUrls.ElementAt(random.Next(urls.Count));
-
-        // ... Use HttpClient.
-        HttpClient client = new HttpClient(handler);
-        HttpResponseMessage response = await client.GetAsync(page);
-    }
-
-    async void SendRandomRequest()
-    {
-        String page = urls.ElementAt(random.Next(urls.Count));
-        HttpClient client = new HttpClient(handler);
-        HttpResponseMessage response = await client.GetAsync(page);
-    }
-
-    async void SendRandomRequestSecure()
-    {
-        String page = secureUrls.ElementAt(random.Next(secureUrls.Count));
-        HttpClient client = new HttpClient(handler);
-        HttpResponseMessage response = await client.GetAsync(page);
-    }
 }
