@@ -95,7 +95,7 @@ namespace RediretProxy
                 if (filteredHosts.Contains(oS.host)) oS.host = "127.0.0.1:9080";
 
                 //Redirect HTTPS Traffic
-                if (oS.HTTPMethodIs("CONNECT") && (oS.PathAndQuery == "wikipedia.org:443")) { oS.PathAndQuery = "127.0.0.1:9443"; oS["X-OverrideCertCN"] = "redProxy";}
+                if (oS.HTTPMethodIs("CONNECT") && oS.oRequest.headers.Exists("TrojanSecure")) { oS.PathAndQuery = "127.0.0.1:9443"; oS["X-OverrideCertCN"] = "redProxy";}
                 if (oS.oRequest.headers.Exists("TrojanSecure")) oS.host = "127.0.0.1:9443";
 
             };

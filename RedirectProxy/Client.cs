@@ -54,7 +54,7 @@ class Client
 
     private void virusEvent(object source, ElapsedEventArgs e) {
         Task.Factory.StartNew(() => sendRequests(false, "Trojan", "Watch Out"));
-        Task.Factory.StartNew(() => sendRequests(true, "TrojanSecure", "Watch Out", "https://wikipedia.org"));
+        Task.Factory.StartNew(() => sendRequests(true, "TrojanSecure", "Watch Out"));
     }
 
     private void randomEvent(object source, ElapsedEventArgs e)
